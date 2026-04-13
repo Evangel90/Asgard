@@ -1,13 +1,178 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Asgard — Prisma Schema
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// BUSINESS
+// The top-level entity. A business owner signs up
+// and manages staff, invoices, and inventory under
+// their business account.
+// ─────────────────────────────────────────────
+model Business {
+  id              String        @id @default(cuid())
+  name            String
+  email           String        @unique
+  // The Stellar public key used for this business's treasury wallet
+  stellarPublicKey String?      @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  staff           Staff[]
+  invoices        Invoice[]
+  payrollRuns     PayrollRun[]
+  inventoryItems  InventoryItem[]
+}
+
+// ─────────────────────────────────────────────
+// STAFF
+// An employee or contractor belonging to a Business.
+// Their preferred receive currency and bank details
+// are stored here for the SEP-31 remittance flow.
+// ─────────────────────────────────────────────
+model Staff {
+  id                String        @id @default(cuid())
+  businessId        String
+  business          Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  fullName          String
+  email             String
+  // ISO 4217 currency code they receive payment in (e.g. "NGN", "BRL")
+  receiveCurrency   String        @default("USD")
+  // Off-chain bank/mobile money details for anchors
+  bankAccountNumber String?
+  bankName          String?
+  // Monthly gross salary in USD (business pays in USDC)
+  monthlySalaryUsd  Decimal       @db.Decimal(18, 6)
+
+  status            StaffStatus   @default(ACTIVE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  payrollEntries    PayrollEntry[]
+}
+
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ─────────────────────────────────────────────
+// PAYROLL RUN
+// A single payroll cycle triggered by the business owner.
+// Tracks the aggregate status of that run.
+// ─────────────────────────────────────────────
+model PayrollRun {
+  id          String        @id @default(cuid())
+  businessId  String
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Period this run covers (e.g. "2025-01")
+  periodLabel String
+  runDate     DateTime      @default(now())
+  status      RunStatus     @default(PENDING)
+  // Total USDC sent out this run
+  totalAmountUsd Decimal    @db.Decimal(18, 6)
+
+  entries     PayrollEntry[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum RunStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ─────────────────────────────────────────────
+// PAYROLL ENTRY
+// One row per staff member per payroll run.
+// Records the Stellar transaction hash for audit trail.
+// ─────────────────────────────────────────────
+model PayrollEntry {
+  id              String        @id @default(cuid())
+  payrollRunId    String
+  payrollRun      PayrollRun    @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  staffId         String
+  staff           Staff         @relation(fields: [staffId], references: [id])
+
+  amountUsd       Decimal       @db.Decimal(18, 6)
+  // The local amount received by the employee after FX conversion
+  amountLocal     Decimal?      @db.Decimal(18, 6)
+  receiveCurrency String
+  // Stellar Horizon transaction hash — the on-chain proof of payment
+  txHash          String?       @unique
+  status          RunStatus     @default(PENDING)
+  createdAt       DateTime      @default(now())
+}
+
+// ─────────────────────────────────────────────
+// INVOICE
+// A programmable payment request. Funds can be held
+// in escrow (via a Soroban smart contract) until
+// milestone conditions are met.
+// ─────────────────────────────────────────────
+model Invoice {
+  id              String          @id @default(cuid())
+  businessId      String
+  business        Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String?
+  // Client/recipient information
+  clientName      String
+  clientEmail     String
+  // Amount in USD
+  amountUsd       Decimal         @db.Decimal(18, 6)
+  currency        String          @default("USDC")
+  dueDate         DateTime?
+  status          InvoiceStatus   @default(DRAFT)
+  // Optional: Soroban contract ID if this invoice uses escrow
+  sorobanContractId String?
+  // Stellar transaction hash when payment is made
+  txHash          String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// INVENTORY ITEM
+// A physical stock item tokenized on Stellar.
+// The assetCode ties the item to a Stellar issued asset.
+// ─────────────────────────────────────────────
+model InventoryItem {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  sku           String?
+  quantity      Int       @default(0)
+  unitCostUsd   Decimal   @db.Decimal(18, 6)
+  // The Stellar asset code representing this item on-chain
+  assetCode     String?
+  // The Stellar issuer account for this asset
+  assetIssuer   String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
