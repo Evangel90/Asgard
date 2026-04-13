@@ -1,16 +1,72 @@
 version: '3.8'
+
 services:
+
+  # ── PostgreSQL database ──────────────────────────────────────────────────
   db:
-    image: postgres:15
+    image: postgres:15-alpine
     restart: always
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=password123
-      - POSTGRES_DB=asgard_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: asgard_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d asgard_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Express / Bun backend ────────────────────────────────────────────────
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Uses Docker's internal DNS — "db" resolves to the postgres container
+      DATABASE_URL: postgresql://admin:password123@db:5432/asgard_db?schema=public
+      PORT: 3000
+      STELLAR_NETWORK: TESTNET
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/server/src
+          target: /app/src
+        - action: sync
+          path: ./apps/server/index.ts
+          target: /app/index.ts
+        - action: rebuild
+          path: ./apps/server/package.json
+
+  # ── React / Vite frontend ────────────────────────────────────────────────
+  client:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_STELLAR_NETWORK: TESTNET
+    depends_on:
+      - server
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/client/src
+          target: /app/src
+        - action: rebuild
+          path: ./apps/client/package.json
 
 volumes:
   postgres_data:
