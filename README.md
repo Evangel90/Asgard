@@ -5,7 +5,7 @@
 <p><strong>An open-source business operating system for global payroll, smart invoicing, and tokenized inventory — powered by the Stellar network.</strong></p>
 
 <p>
-  <a href="https://github.com/your-username/asgard/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blueviolet.svg"/></a>
+  <a href="https://unlicense.org/"><img alt="License: Unlicense" src="https://img.shields.io/badge/license-Unlicense-blue.svg"/></a>
   <a href="https://stellar.org"><img alt="Powered by Stellar" src="https://img.shields.io/badge/Powered%20by-Stellar-6366f1.svg"/></a>
   <img alt="Runtime: Bun" src="https://img.shields.io/badge/Runtime-Bun-f9f1e1.svg"/>
   <img alt="Stack: React + Vite" src="https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61dafb.svg"/>
@@ -456,8 +456,8 @@ docker compose down -v
 - [ ] Create a **bulk-upload CSV processor** for monthly payroll batches.
 
 ### Phase 3: Smart Business Logic 🧠
-- [ ] *(Contributor Task)* **Soroban Invoicing contracts** with milestone-based escrow — link contract ID to the `Invoice.sorobanContractId` field.
-- [ ] *(Contributor Task)* **Tokenized Inventory** assets — issue Stellar assets and bind them to `InventoryItem.assetCode`.
+- [ ] **Soroban Invoicing contracts** with milestone-based escrow — link contract ID to the `Invoice.sorobanContractId` field.
+- [ ] **Tokenized Inventory** assets — issue Stellar assets and bind them to `InventoryItem.assetCode`.
 - [ ] **Automated tax withholding** and fee calculation module.
 
 ---
@@ -492,7 +492,7 @@ Asgard is an open-source ecosystem project. We prioritize **modularity** so you 
 
 ## 📄 License
 
-Asgard is released under the [MIT License](./LICENSE).
+Asgard is released under the [Unlicense](./LICENSE).
 
 ---
 
