@@ -21,7 +21,7 @@ const networkPassphrase =
 export async function getAccountBalances(publicKey: string) {
   const account = await server.loadAccount(publicKey);
   return account.balances.map((b) => ({
-    assetCode: b.asset_type === "native" ? "XLM" : (b as StellarSdk.Horizon.HorizonApi.BalanceLine).asset_code,
+    assetCode: b.asset_type === "native" ? "XLM" : (b as any).asset_code,
     balance: b.balance,
   }));
 }

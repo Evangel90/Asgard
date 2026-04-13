@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -34,7 +34,7 @@ router.post("/", async (req: Request, res: Response) => {
 
 // DELETE /api/staff/:id — remove a staff member
 router.delete("/:id", async (req: Request, res: Response) => {
-  await prisma.staff.delete({ where: { id: req.params.id } });
+  await prisma.staff.delete({ where: { id: req.params.id as string } });
   res.status(204).send();
 });
 

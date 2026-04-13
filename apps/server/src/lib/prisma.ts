@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/index.js";
 
 // Singleton pattern — prevents creating multiple DB connections in dev
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };

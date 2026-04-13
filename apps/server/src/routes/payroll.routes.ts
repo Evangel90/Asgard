@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { buildPathPaymentTransaction, submitSignedTransaction, getAccountBalances } from "../services/stellar.service.js";
 

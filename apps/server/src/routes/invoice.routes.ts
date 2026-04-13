@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma.js";
 
 const router = Router();
@@ -30,7 +30,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.patch("/:id", async (req: Request, res: Response) => {
   const { status, txHash, sorobanContractId } = req.body;
   const invoice = await prisma.invoice.update({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     data: { status, txHash, sorobanContractId },
   });
   res.json(invoice);

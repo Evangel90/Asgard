@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# AI Slop Detection
+# Check for common AI-generated filler text that shouldn't be in code or docs
+# Add more patterns as needed
+SLOP_PATTERNS="delve|leverage|comprehensive|as a language model|seamless integration|pave the way"
+
+if grep -Ei "$SLOP_PATTERNS" $(git diff --cached --name-only | grep -v ".githooks/pre-commit"); then
+    echo "❌ Error: AI slop patterns detected in your changes."
+    echo "Please remove generic AI filler words (leverage, delve, etc.) or refine your content."
+    exit 1
+fi
+
+# Build Checks (Bun)
+# We check if the root package and apps can build/typecheck
+echo "🔍 Running build and type checks..."
+
+# Check server
+if [ -d "apps/server" ]; then
+    echo "Checking apps/server..."
+    (cd apps/server && bunx tsc --noEmit)
+    if [ $? -ne 0 ]; then
+        echo "❌ Error: apps/server type check failed."
+        exit 1
+    fi
+fi
+
+# Check client
+if [ -d "apps/client" ]; then
+    echo "Checking apps/client..."
+    (cd apps/client && bunx tsc --noEmit)
+    if [ $? -ne 0 ]; then
+        echo "❌ Error: apps/client type check failed."
+        exit 1
+    fi
+fi
+
+# Sensitive Info Check
+if git diff --cached -- . ':(exclude).githooks/pre-commit' | grep -E "AKIA[0-9A-Z]{16}|SG\.[0-9a-zA-Z._-]{22,64}|SECRET_KEY|PRIVATE_KEY"; then
+    echo "❌ Error: Possible sensitive information (keys) detected in changes."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0
