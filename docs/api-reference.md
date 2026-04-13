@@ -1,6 +1,6 @@
 # 🔌 API Reference
 
-Base URL: `http://localhost:3000`
+Base URL: `http://localhost:3000` 
 
 ### Staff Management
 *   `GET /api/staff?businessId=...` - List all staff members.
